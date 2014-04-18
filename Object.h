@@ -14,8 +14,8 @@ public:
 class Object //: public Shape
 {
 public:
+    Object();
     Object(char *filename);
-    Object(char *filename,char* colorImg, char* heightImg);
 //    ~Object();
 
     Texture* color;
@@ -32,12 +32,14 @@ public:
 
     void Export(std::string filename);
     void Import(std::string filename);
-    void draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture,int unifColorTex, int unifHeightTex);
-    void normalize();
-    void traslate   (float x, float y, float z);
-    void traslate   (glm::vec3 v);
-    void scale      (float s);
-    void rotate     (float x, float y, float z, float w);
+    void draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture,int unifColorTex, int unifHeightTex,bool draw=true);
+    glm::vec4 normalize();
+    virtual void traslate   (float x, float y, float z);
+    virtual void traslate   (glm::vec3 v);
+    virtual void scale      (float s);
+    virtual void rotate     (float x, float y, float z, float w);
+    virtual void rotate     (glm::vec3 v);
+    virtual void rotate     (glm::vec4 v);
     void toBuffers();
     void setColorFile (std::string filename);
     void setHeightFile(std::string filename);
@@ -88,48 +90,36 @@ public:
 };
 
 
-class AnimatedObject //: public Object
+class AnimatedObject : public Object
 {
 public:
     AnimatedObject(char *filename);
-    AnimatedObject(char *filename,char* colorImg, char* heightImg);
-//    ~Object();
 
-    Texture* color;
-    Texture* height;
-    std::string colorFile;
-    std::string heightFile;
-    std::vector<glm::vec3>  vertices;
-    std::vector<glm::vec3>  normals;
-    std::vector<glm::vec3>  tangents;
-    std::vector<glm::vec2>  texture;
     std::vector<glm::vec4>  weights;
     std::vector<glm::vec4>  weightindices;
     std::vector<glm::vec3>  deform;
     std::vector<Bone>       skeleton;
     std::vector<Keyframe>   animation;
     int time;
-    int numFaces;
     int numBones;
     int numKeyframes;
 
-    unsigned int vbo_vertices, vbo_normals, vbo_tangents, vbo_texture, vbo_deform, vbo_weights,vbo_weightindices;
+    unsigned int vbo_deform, vbo_weights,vbo_weightindices;
 
     void Export(std::string filename);
     void Import(std::string filename);
     void draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture,
-              int attrDeform, int unifColorTex, int unifHeightTex, int attrWeights, int attrIndices);
-    void normalize();
-    void traslate   (float x, float y, float z);
-    void traslate   (glm::vec3 v);
-    void scale      (float s);
-    void rotate     (float x, float y, float z, float w);
+              int attrDeform, int unifColorTex, int unifHeightTex, int attrWeights, int attrIndices, bool drawSkeleton=false);
+
+    virtual void traslate   (float x, float y, float z);
+    virtual void traslate   (glm::vec3 v);
+    virtual void scale      (float s);
+    virtual void rotate     (float x, float y, float z, float w);
+    virtual void rotate     (glm::vec3 v);
+    virtual void rotate     (glm::vec4 v);
     void toBuffers();
     void buildMatrices(){
         for(int i=0;i<skeleton.size();i++)
             skeleton[i].buildMatrix();}
     void animate();
-    void setColorFile (std::string filename);
-    void setHeightFile(std::string filename);
-
 };

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <QElapsedTimer>
 
+Object::Object(){}
 Object::Object(char *filename){
         Import(filename);
 }
@@ -65,7 +66,7 @@ void Object::Import(std::string filename){
 
 }
 
-void Object::draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture, int unifColorTex, int unifHeightTex)
+void Object::draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture, int unifColorTex, int unifHeightTex,bool draw)
 {
     sh->disableAttributes();
     sh->enableAttributes(attrVertex);
@@ -90,19 +91,22 @@ void Object::draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, i
     color->bind(sh->properties[unifColorTex]);
     height->bind(sh->properties[unifHeightTex]);
 
-    glDrawArrays(GL_TRIANGLES, 0, numFaces*3);
+    if(draw)
+        glDrawArrays(GL_TRIANGLES, 0, numFaces*3);
 }
 
-void Object::normalize(){
+
+
+glm::vec4 Object::normalize(){
     glm::vec3 mean(0,0,0);
     float largestCoordinate=0;
     for(int i=0;i<numFaces*3;i++)   mean+=vertices[i];
-
     mean/=numFaces*3;
-
-    for(int i=0;i<numFaces*3;i++)   vertices[i]-=mean;
+    traslate(-mean);
     for(int i=0;i<numFaces*3;i++)   if(glm::length(vertices[i])>largestCoordinate) largestCoordinate=glm::length(vertices[i]);
-    for(int i=0;i<numFaces*3;i++)   vertices[i]/=largestCoordinate;
+    scale(1/largestCoordinate);
+
+    return glm::vec4(mean,1/largestCoordinate);
 }
 void Object::traslate(float x, float y, float z){
     for(int i=0;i<numFaces*3;i++)   vertices[i] +=glm::vec3(x,y,z);
@@ -120,7 +124,21 @@ void Object::scale  (float s){
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numFaces*3, &vertices[0], GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
+void Object::rotate(float x, float y, float z, float w){
+    glm::mat3 rotation_matrix=glm::mat3(glm::rotate(glm::mat4(1.0),w,glm::vec3(x,y,z)));
+    for(int i=0;i<numFaces*3;i++)   vertices[i] = rotation_matrix * vertices[i];
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numFaces*3, &vertices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+}
+
+void Object::rotate     (glm::vec3 v){
+    rotate(v.x,v.y,v.z,glm::length(v));
+}
+void Object::rotate     (glm::vec4 v){
+    rotate(v.x,v.y,v.z,v.w);
+}
 void Object::toBuffers(){
     glGenBuffers(1, &vbo_vertices);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
@@ -260,19 +278,15 @@ void AnimatedObject::Import(std::string filename){
 }
 
 void AnimatedObject::draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture,
-                  int attrDeform,int unifColorTex, int unifHeightTex, int attrWeights, int attrIndices)
+                  int attrDeform,int unifColorTex, int unifHeightTex, int attrWeights, int attrIndices,bool drawSkeleton)
 {
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
-    glVertexAttribPointer(sh->properties[attrVertex], 3, GL_FLOAT, GL_FALSE,3*sizeof(float),0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-    glVertexAttribPointer(sh->properties[attrNormal], 3, GL_FLOAT, GL_FALSE,3*sizeof(float),0);
+    Object::draw(sh, attrVertex,  attrNormal,  attrTangent,  attrTexture,
+                 unifColorTex,  unifHeightTex,false);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_tangents);
-    glVertexAttribPointer(sh->properties[attrTangent],3, GL_FLOAT, GL_FALSE,3*sizeof(float),0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_texture);
-    glVertexAttribPointer(sh->properties[attrTexture],2, GL_FLOAT, GL_FALSE, 2*sizeof(float),0);
+    sh->enableAttributes(attrDeform);
+    sh->enableAttributes(attrWeights);
+    sh->enableAttributes(attrIndices);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_weights);
     glVertexAttribPointer(sh->properties[attrWeights],4, GL_FLOAT, GL_FALSE, 4*sizeof(float),0);
@@ -286,34 +300,17 @@ void AnimatedObject::draw(Shader* sh, int attrVertex, int attrNormal, int attrTa
 
   //  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-
-    color->bind(sh->properties[unifColorTex]);
-    height->bind(sh->properties[unifHeightTex]);
-
     glDrawArrays(GL_TRIANGLES, 0, numFaces*3);
-}
 
-void AnimatedObject::normalize(){
-    glm::vec3 mean(0,0,0);
-    float largestCoordinate=0;
-    for(int i=0;i<numFaces*3;i++)   mean+=vertices[i];
+    if(drawSkeleton)
+        for(int i=0;i<skeleton.size();i++)
+            skeleton[i].cube->draw(sh,attrVertex,attrNormal,attrTangent,attrTexture,unifColorTex,unifHeightTex);
 
-    mean/=numFaces*3;
-
-    for(int i=0;i<numFaces*3;i++)   vertices[i]-=mean;
-    if(numBones>0) for(int j=0;j<skeleton.size();j++) skeleton[j].setCenter(skeleton[j].center-mean);
-    for(int i=0;i<numFaces*3;i++)   if(glm::length(vertices[i])>largestCoordinate) largestCoordinate=glm::length(vertices[i]);
-    for(int i=0;i<numFaces*3;i++)   vertices[i]/=largestCoordinate;
-    if(numBones>0) for(int j=0;j<skeleton.size();j++) skeleton[j].setCenter(skeleton[j].center/largestCoordinate);
 }
 void AnimatedObject::traslate(float x, float y, float z){
-    for(int i=0;i<numFaces*3;i++)   vertices[i] +=glm::vec3(x,y,z);
+    Object::traslate(x,y,z);
     if(numBones>0)
-        for(int i=0;i<skeleton.size();i++) skeleton[i].center+=glm::vec3(x,y,z);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numFaces*3, &vertices[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
+        for(int i=0;i<skeleton.size();i++) skeleton[i].setCenter(skeleton[i].center+glm::vec3(x,y,z));
 }
 
 void AnimatedObject::traslate(glm::vec3 v){
@@ -321,35 +318,24 @@ void AnimatedObject::traslate(glm::vec3 v){
 }
 
 void AnimatedObject::scale  (float s){
-    for(int i=0;i<numFaces*3;i++)   vertices[i] *=s;
+    Object::scale(s);
     if(numBones>0)
-        for(int i=0;i<skeleton.size();i++) skeleton[i].center *=s;
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numFaces*3, &vertices[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        for(int i=0;i<skeleton.size();i++) skeleton[i].setCenter(s*skeleton[i].center);
+}
 
+void AnimatedObject::rotate(float x, float y, float z, float w){
+    Object::rotate(x,  y,  z,  w);
+}
+void AnimatedObject::rotate(glm::vec3 v){
+    Object::rotate(v);
+}
+void AnimatedObject::rotate(glm::vec4 v){
+    Object::rotate(v);
 }
 
 void AnimatedObject::toBuffers(){
-    glGenBuffers(1, &vbo_vertices);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numFaces*3, &vertices[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    glGenBuffers(1, &vbo_normals);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numFaces*3, &normals[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    glGenBuffers(1, &vbo_tangents);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_tangents);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numFaces*3, &tangents[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    glGenBuffers(1, &vbo_texture);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_texture);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*numFaces*3, &texture[0], GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    Object::toBuffers();
 
     glGenBuffers(1, &vbo_weights);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_weights);
@@ -365,7 +351,6 @@ void AnimatedObject::toBuffers(){
     glBindBuffer(GL_ARRAY_BUFFER, vbo_deform);
 //    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*numFaces*3, &deform[0], GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 }
 
 void AnimatedObject::animate(){
@@ -376,7 +361,6 @@ void AnimatedObject::animate(){
         keyframe++;
 
     std::vector<float> parameters;
-
 
 //myslerp
     for(int i=0; i<animation[keyframe].parameters.size();i++){
@@ -393,8 +377,6 @@ void AnimatedObject::animate(){
         else parameters.push_back(animation[0].parameters[i]);
     }
 
-
-
     int paramindex=0;
     for(int b=0;b<skeleton.size();b++)
         for(int p=0;p<skeleton[b].parameters.size();p++){
@@ -402,11 +384,4 @@ void AnimatedObject::animate(){
             paramindex++;
         }
 
-}
-
-void AnimatedObject::setColorFile(std::string filename){
-    colorFile   =filename; color = new Texture(colorFile.c_str(),0);
-}
-void AnimatedObject::setHeightFile(std::string filename){
-    heightFile   =filename;  height = new Texture(heightFile.c_str(),1);
 }

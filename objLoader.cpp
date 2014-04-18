@@ -27,7 +27,7 @@
 
 
     AnimatedObject * skull;
-    AnimatedObject * board;
+    Object * board;
     AnimatedObject * einstein;
     Bone * boneDebug;
     Object * debugCube;
@@ -58,21 +58,13 @@
 float angle=0;
 int an=0;
 
-std::vector<Skull> toyList;
+//std::vector<Skull> toyList;
 
 void initializeGL()
 {
 	glewInit();
     einstein = new AnimatedObject("einstein");//einstein->skeleton[2].setCenter(glm::vec3(0.5,0.2,0));
-    qDebug()<<einstein->skeleton[0].center.x<<einstein->skeleton[0].center.y<<einstein->skeleton[0].center.z;
-    boneDebug= new Bone();                //commenting this two line un-causes the error
-    debugCube= new Object("boneDebug");
-//    for(int i=0;i<einstein->skeleton.size();i++){
-//        glm::vec3 c=0.1f*einstein->skeleton[i].center;
-//        einstein->skeleton[i].setCenter(c);
-//    }
-//    einstein->skeleton[2].center+=glm::vec3(0.1,-0.3,0);
-//    board=new Object("Board.obj","boardTexkrit2.png","boardBump.png"); board->scale(1.8);
+    board=new Object("Board"); board->scale(1.8); board->rotate(1,0,0,-90);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -129,15 +121,7 @@ void texPass(){
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     texShader->enableAttributes();
-
     einstein->animate();
-//    einstein->skeleton[1].parameters[0]=(float)(20*(sin(4*an*3.14159/180)+1));
-//    einstein->skeleton[2].parameters[0]=(float)an*10;
-//    skull->skeleton[0].parameters[0]=(float)(20*(sin(4*an*3.14159/180)+1));
-//    skull->skeleton[6].parameters[0]=(float)(45*sin(4*an*3.14159/180));
-//    skull->skeleton[7].parameters[0]=(float)(45*sin(4*an*3.14159/180));
-//    skull->skeleton[4].parameters[0]=(float)(45*sin(4*an*3.14159/180));
-//    skull->skeleton[4].parameters[1]=(float)(45*cos(4*an*3.14159/180));
     einstein->buildMatrices();
     einstein->deform.clear();
 #define center(k)   einstein->skeleton[k].center
@@ -178,18 +162,8 @@ void texPass(){
         einstein->deform.push_back(deform);
     }
 
-//    board->draw(texShader,0,1,2,3,6,11,12,4,5);
-
+    board->draw(texShader,0,1,2,3,11,12);
     einstein->draw(texShader,0,1,2,3,6,11,12,4,5);
-//    boneDebug->cube->draw(texShader,0,1,2,3,11,12);
-//    debugCube->draw(texShader,0,1,2,3,11,12);
-
-//    for(int i=0;i<einstein->skeleton.size();i++){
-
-//        einstein->skeleton[i].cube->draw(texShader,0,1,2,3,11,12);
-//    }
-
-    an= (an>359)? 0 : an+1;
 
 
 }

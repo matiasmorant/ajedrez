@@ -1,5 +1,5 @@
 #include<Object.h>
-
+/*
 class Skull : public AnimatedObject
 {
 public:
@@ -12,3 +12,4 @@ public:
     glm::vec3 position;
 
 };
+*/

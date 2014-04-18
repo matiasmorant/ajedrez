@@ -8,10 +8,11 @@
 class Texture{
 
 public:
-    Texture(const char *image);
+    Texture(const char *image,GLuint texUnit);
     ~Texture();
 
-	GLuint id;
+    GLuint name;
+    GLuint tex_unit;
 
 	void bind(GLint property);
 };

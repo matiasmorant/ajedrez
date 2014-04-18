@@ -14,15 +14,17 @@ SOURCES += \
     objLoader.cpp \
     Framebuffer.cpp \
     Object.cpp \
-    Skull.cpp
+    Skull.cpp \
+    Skull.cpp \
+    Utilities.cpp
 
 HEADERS += \
     Texture.h \
     Shader.h \
     Framebuffer.h \
     Object.h \
-    Skull.h
+    Skull.h \
+    Utilities.h
 
 OBJECTS_DIR = ../build_files
 MOC_DIR = ../build_files
-

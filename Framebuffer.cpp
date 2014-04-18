@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <GL/glu.h>
 #include "Shader.h"
+#include "Utilities.h"
 
 void Framebuffer::init(int width, int height, int n){
 
@@ -13,16 +14,19 @@ void Framebuffer::init(int width, int height, int n){
 	fbo_texture = new GLuint[n];
 	int i;
 	for(i=0;i<n;i++){
-	  glGenTextures(1, &(fbo_texture[i]));
-	  glActiveTexture(GL_TEXTURE0+fbo_texture[i]);
-	  glBindTexture(GL_TEXTURE_2D, fbo_texture[i]);
+
+      glGenTextures(1, &(fbo_texture[i]));
+      glActiveTexture(GL_TEXTURE0+i);
+      glBindTexture(GL_TEXTURE_2D, fbo_texture[i]);
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	  glBindTexture(GL_TEXTURE_2D, 0);
+      glBindTexture(GL_TEXTURE_2D, 0);
 	} 
+
+
   /* Depth buffer */
   glGenRenderbuffers(1, &rbo_depth);
   glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth);
@@ -87,10 +91,12 @@ void Framebuffer::draw(Shader* sh){
  // glUseProgram(sh->program);
 int i;
 for(int i=0;i<N;i++){
-  glActiveTexture(GL_TEXTURE0+fbo_texture[i]);
+
+  glActiveTexture(GL_TEXTURE0+i);
   glBindTexture(GL_TEXTURE_2D, fbo_texture[i]);
-  glUniform1i(sh->properties[i+1], fbo_texture[i]);
+  glUniform1i(sh->properties[i+1], i);
 }
+
   glEnableVertexAttribArray(sh->properties[0]);
   glBindBuffer(GL_ARRAY_BUFFER, vbo_fbo_vertices);
   glVertexAttribPointer(
@@ -103,5 +109,6 @@ for(int i=0;i<N;i++){
   );
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glDisableVertexAttribArray(sh->properties[0]);
+
 
 }

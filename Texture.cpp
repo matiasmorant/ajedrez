@@ -6,13 +6,14 @@
 #include "SDL_image.h"
 #include <GL/glu.h>
 
-Texture::Texture(const char *image){
+Texture::Texture(const char *image, GLuint texUnit){
+        tex_unit=texUnit;
 
 		SDL_Surface* texImage = IMG_Load(image);
 		if(texImage==NULL){	printf("cant load image %s: %s\n",image,IMG_GetError());}
 		else{
-		glGenTextures(1, &id);
-		glBindTexture(GL_TEXTURE_2D, id);
+        glGenTextures(1, &name);
+        glBindTexture(GL_TEXTURE_2D, name);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, // target
                0,  // level, 0 = base, no minimap,
@@ -27,7 +28,7 @@ Texture::Texture(const char *image){
 }
 
 void Texture::bind(GLint property){
-	glActiveTexture(GL_TEXTURE0+id);
-	glBindTexture(GL_TEXTURE_2D, id);
-	glUniform1i(property, /*GL_TEXTURE*/id);
+    glActiveTexture(GL_TEXTURE0+tex_unit);
+    glBindTexture(GL_TEXTURE_2D, name);
+    glUniform1i(property, /*GL_TEXTURE*/tex_unit);
 }

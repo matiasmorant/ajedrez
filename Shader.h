@@ -17,6 +17,9 @@ public:
 	GLint*	properties;
 	void	getProperties(char* list, int attributes, int uniforms);
     void	enableAttributes();
+    void	enableAttributes(int i);
+    void	disableAttributes();
+    void	disableAttributes(int i);
 	char* shaderToString(const char* filename);
 	void print_log(GLuint object);
 	GLuint createShader(const char* filename, GLenum type);

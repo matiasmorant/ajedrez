@@ -127,7 +127,17 @@ void Shader::getProperties(char* list, int attributes, int uniforms){
 	}
 }
 void	Shader::enableAttributes(){
-    int i;
-    for(i=0;i<attributeNumber;i++)
-    glEnableVertexAttribArray(properties[i]);
+    for(int i=0;i<attributeNumber;i++) glEnableVertexAttribArray(properties[i]);
+}
+
+void	Shader::enableAttributes(int i){
+    if(i<attributeNumber) glEnableVertexAttribArray(properties[i]);
+}
+
+void	Shader::disableAttributes(){
+    for(int i=0;i<attributeNumber;i++)  glDisableVertexAttribArray(properties[i]);
+}
+
+void	Shader::disableAttributes(int i){
+    if(i<attributeNumber) glDisableVertexAttribArray(properties[i]);
 }

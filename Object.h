@@ -10,18 +10,56 @@ public:
     glm::vec3* vd;
     std::vector<int> g;
 };
+
+class Object //: public Shape
+{
+public:
+    Object(char *filename);
+    Object(char *filename,char* colorImg, char* heightImg);
+//    ~Object();
+
+    Texture* color;
+    Texture* height;
+    std::string colorFile;
+    std::string heightFile;
+    std::vector<glm::vec3>  vertices;
+    std::vector<glm::vec3>  normals;
+    std::vector<glm::vec3>  tangents;
+    std::vector<glm::vec2>  texture;
+    int numFaces;
+
+    unsigned int vbo_vertices, vbo_normals, vbo_tangents, vbo_texture;
+
+    void Export(std::string filename);
+    void Import(std::string filename);
+    void draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture,int unifColorTex, int unifHeightTex);
+    void normalize();
+    void traslate   (float x, float y, float z);
+    void traslate   (glm::vec3 v);
+    void scale      (float s);
+    void rotate     (float x, float y, float z, float w);
+    void toBuffers();
+    void setColorFile (std::string filename);
+    void setHeightFile(std::string filename);
+};
+
 class Bone{
 public:
-    Bone(){center=glm::vec3(0,0,0); parent=-1;size=0.1;}
+    Bone(){
+        center=glm::vec3(0,0,0);
+        parent=-1;
+        cube = new Object("boneDebug");
+        cube->scale(0.2);
+        cube->traslate(center);
+    }
     ~Bone(){}
     glm::vec3 center;
     std::vector<glm::vec3> axis;
     std::vector<float> parameters;
     glm::mat3 matrix;
-//    std::vector<glm::vec3>  vertices;
-//    std::vector<glm::vec3>  normals;
-    float size;
     int parent;
+    int index;
+    Object * cube;
     void buildMatrix(){
         glm::vec3 v(0,0,0);
         for(int i=0;i<axis.size();i++) v+=parameters[i]*axis[i];
@@ -29,10 +67,16 @@ public:
                 matrix=glm::mat3(glm::rotate(glm::mat4(1.0f), (float)glm::length(v), glm::normalize(v)));
         else    matrix=glm::mat3(1.0);
     }
-//    void makeBone(){
-//        vertices.push_back(glm::vec3());
-
-//    }
+    void setCenter(glm::vec3 c){
+        cube->traslate(c-center);
+        center=c;
+    }
+    void setIndex(int i){
+        index=i;
+        std::string filename(1,i+'0');
+        filename=filename+".png";
+        cube->setColorFile(filename);
+    }
 };
 
 class Keyframe{
@@ -44,12 +88,11 @@ public:
 };
 
 
-
-class Object //: public Shape
+class AnimatedObject //: public Object
 {
 public:
-    Object(char *filename);
-    Object(char *filename,char* colorImg, char* heightImg);
+    AnimatedObject(char *filename);
+    AnimatedObject(char *filename,char* colorImg, char* heightImg);
 //    ~Object();
 
     Texture* color;
@@ -78,10 +121,15 @@ public:
               int attrDeform, int unifColorTex, int unifHeightTex, int attrWeights, int attrIndices);
     void normalize();
     void traslate   (float x, float y, float z);
+    void traslate   (glm::vec3 v);
     void scale      (float s);
     void rotate     (float x, float y, float z, float w);
     void toBuffers();
-    void buildMatrices(){ for(int i=0;i<skeleton.size();i++) skeleton[i].buildMatrix();}
+    void buildMatrices(){
+        for(int i=0;i<skeleton.size();i++)
+            skeleton[i].buildMatrix();}
     void animate();
+    void setColorFile (std::string filename);
+    void setHeightFile(std::string filename);
 
 };

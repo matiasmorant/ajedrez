@@ -17,13 +17,20 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <QDebug>
+//#include <QOpenGLDebugLogger>
+#include "Utilities.h"
+
 #define SCREEN_WIDTH	640
 #define SCREEN_HEIGHT	640
 
-    Object * skull;
-    Object * board;
-    Object * einstein;
-    Object * boneDebug;
+
+
+    AnimatedObject * skull;
+    AnimatedObject * board;
+    AnimatedObject * einstein;
+    Bone * boneDebug;
+    Object * debugCube;
 	Shader *texShader;
 	Shader *mixShader;
 //	Shader *post_shader;
@@ -56,10 +63,15 @@ std::vector<Skull> toyList;
 void initializeGL()
 {
 	glewInit();
-
-    einstein = new Object("einstein");
-    boneDebug= new Object("boneDebug");
-    einstein->skeleton[2].center+=glm::vec3(0.1,-0.3,0);
+    einstein = new AnimatedObject("einstein");//einstein->skeleton[2].setCenter(glm::vec3(0.5,0.2,0));
+    qDebug()<<einstein->skeleton[0].center.x<<einstein->skeleton[0].center.y<<einstein->skeleton[0].center.z;
+    boneDebug= new Bone();                //commenting this two line un-causes the error
+    debugCube= new Object("boneDebug");
+//    for(int i=0;i<einstein->skeleton.size();i++){
+//        glm::vec3 c=0.1f*einstein->skeleton[i].center;
+//        einstein->skeleton[i].setCenter(c);
+//    }
+//    einstein->skeleton[2].center+=glm::vec3(0.1,-0.3,0);
 //    board=new Object("Board.obj","boardTexkrit2.png","boardBump.png"); board->scale(1.8);
 
     glEnable(GL_DEPTH_TEST);
@@ -83,7 +95,7 @@ void paintGL()
     glm::vec3 cameraPos =   glm::vec3(4*sin(cameraTheta)*sin(cameraPhi), 4*cos(cameraPhi),4*cos(cameraTheta)*sin(cameraPhi));
     glm::vec3 cameraUp  =   glm::vec3(0.0,-1.0, 0.0);
     glm::mat4 view      =	glm::lookAt(cameraPos, glm::vec3(0.0, 0.0, 0.0), cameraUp);
-    glm::mat4 projection=   glm::perspective(45.0f, 1.0f*1/1, 0.1f, 5.0f);
+    glm::mat4 projection=   glm::perspective(45.0f, 1.0f*1/1, 0.05f, 200.0f);
     glm::mat3 m_tr_inv  =   glm::transpose(glm::inverse(glm::mat3(view*model)));
 
     glUseProgram(texShader->program);
@@ -94,15 +106,16 @@ void paintGL()
     glUniformMatrix4fv(texShader->properties[9], 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix3fv(texShader->properties[10], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
 //    glUniformMatrix3fv(texShader->properties[13], 1, GL_FALSE, glm::value_ptr(bones[0])	);
-
 	glBindFramebuffer(GL_FRAMEBUFFER, texFramebuffer->fbo);
 	GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0+1,GL_COLOR_ATTACHMENT0+2};
 	glDrawBuffers(3, buffers);
-    texPass();
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    texPass();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(mixShader->program);
     glUniformMatrix4fv(mixShader->properties[4], 1, GL_FALSE, glm::value_ptr(view)	);
+
     texFramebuffer->draw(mixShader);
 
 	glFlush(); 
@@ -112,13 +125,11 @@ void paintGL()
 }
 
 void texPass(){
-
     glClearColor(0, 0, 0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     texShader->enableAttributes();
 
-    einstein->time=((an/10)%4)*8;
     einstein->animate();
 //    einstein->skeleton[1].parameters[0]=(float)(20*(sin(4*an*3.14159/180)+1));
 //    einstein->skeleton[2].parameters[0]=(float)an*10;
@@ -166,14 +177,21 @@ void texPass(){
 
         einstein->deform.push_back(deform);
     }
+
 //    board->draw(texShader,0,1,2,3,6,11,12,4,5);
+
     einstein->draw(texShader,0,1,2,3,6,11,12,4,5);
-    boneDebug->draw(texShader,0,1,2,3,6,11,12,4,5);
+//    boneDebug->cube->draw(texShader,0,1,2,3,11,12);
+//    debugCube->draw(texShader,0,1,2,3,11,12);
+
+//    for(int i=0;i<einstein->skeleton.size();i++){
+
+//        einstein->skeleton[i].cube->draw(texShader,0,1,2,3,11,12);
+//    }
 
     an= (an>359)? 0 : an+1;
 
-    int i;
-    for(i=0;i<5;i++) glDisableVertexAttribArray(texShader->properties[i]);
+
 }
 void finalPass(){
 
@@ -237,9 +255,8 @@ void close()
 
 int main( int argc, char* args[] )
 {
-
-	initSDL();
-	initializeGL();
+    initSDL();
+    initializeGL();
 
 	SDL_Event e;
 	bool quit = false;
@@ -257,7 +274,7 @@ int main( int argc, char* args[] )
 			}
 		}
 
-		paintGL();
+        paintGL();
 		
 		SDL_GL_SwapWindow( gWindow );
 	}

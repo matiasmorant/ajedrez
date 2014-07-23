@@ -85,6 +85,11 @@ void moveCamera(){
     view      =   glm::lookAt(cameraPos, glm::vec3(0.0, 0.0, 0.0), cameraUp);
 }
 
+void moveFichas(){
+    *(ficha1->model_matrix)=    glm::translate(glm::mat4(1.f),glm::vec3(0,(float)fichaL*0.31-1.4,0));
+    *(ficha2->model_matrix)=	glm::translate(glm::mat4(1.f),glm::vec3(0,(float)fichaR*0.31-1.4,0));
+}
+
 void initializeGL()
 {
 	glewInit();
@@ -111,7 +116,10 @@ void initializeGL()
 	texFramebuffer = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT,3);
     texFramebuffer->texture_names = {"colorTex","normalTex", "posTex"};
 
+
     moveCamera();
+    moveFichas();
+
 /*
     QSurfaceFormat format;
     // asks for a OpenGL 3.2 debug context using the Core profile
@@ -164,71 +172,20 @@ void texPass(){
     glClearColor(0, 0, 0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 
-
-    glm::mat4 model=glm::mat4(1.0f);
-    glm::mat3 m_tr_inv  =   glm::transpose(glm::inverse(glm::mat3(model)));
-
     texShader->enableAttributes();
 
-    glUniformMatrix4fv(texShader->uniforms["m"],        1, GL_FALSE, glm::value_ptr(model)		);
-    glUniformMatrix3fv(texShader->uniforms["m_tr_inv"], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
-
     glUniform1i(texShader->uniforms["animation"], 0 );
-//"coord3d normal tangent texture weights indices deform m v p m_tr_inv monkeyTex heightTex bones centers parents animation"
-    board->draw(texShader,0,1,2,3,11,12);
-  //  origin->draw(texShader,0,1,2,3,11,12);
-  //  debugCube->draw(texShader,0,1,2,3,11,12);
 
-    model     =	glm::translate(glm::mat4(1.f),glm::vec3(0,(float)fichaL*0.31-1.4,0));
-    m_tr_inv  = glm::transpose(glm::inverse(glm::mat3(model)));
-    glUniformMatrix4fv(texShader->uniforms["m"], 1, GL_FALSE, glm::value_ptr(model)		);
-    glUniformMatrix3fv(texShader->uniforms["m_tr_inv"], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
-
-    ficha1->draw(texShader,0,1,2,3,11,12);
-
-    model     =	glm::translate(glm::mat4(1.f),glm::vec3(0,(float)fichaR*0.31-1.4,0));
-    m_tr_inv  = glm::transpose(glm::inverse(glm::mat3(model)));
-    glUniformMatrix4fv(texShader->uniforms["m"], 1, GL_FALSE, glm::value_ptr(model)		);
-    glUniformMatrix3fv(texShader->uniforms["m_tr_inv"], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
-
-    ficha2->draw(texShader,0,1,2,3,11,12);
-
-//    glFlush(); glFinish();
-//    qDebug()<<"\text:\t"<<    timer2.ntime();
+    board->draw(texShader);
+    ficha1->draw(texShader);
+    ficha2->draw(texShader);
+//  origin->draw(texShader);
+//  debugCube->draw(texShader);
 
     for(auto toy: toyList){
-
-        model=*(toy->model_matrix);
-        m_tr_inv  = glm::transpose(glm::inverse( glm::mat3(model) ));
-        glUniformMatrix4fv(texShader->uniforms["m"], 1, GL_FALSE, glm::value_ptr(model)		);
-        glUniformMatrix3fv(texShader->uniforms["m_tr_inv"], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
-
-//        qDebug()<<"toy_matrix:"<<    timer.ntime();
-
         toy->animate(false);
-
-        glm::mat3 *bones = new glm::mat3[8];
-        glm::vec3 *centers = new glm::vec3[8];
-        for(int i=0;i<toy->skeleton->size();i++){
-            bones[i]=toy->skeleton->at(i).m;
-            centers[i]=toy->skeleton->at(i).b;
-        }
-
-        glUniformMatrix3fv  (texShader->uniforms["bones"],      8, GL_FALSE, glm::value_ptr(bones[0])	);
-        glUniform3fv        (texShader->uniforms["centers"],    8,           glm::value_ptr(centers[0]) );
-        glUniform1i         (texShader->uniforms["animation"],  1                          );
-
-//glFlush(); glFinish();
-//qDebug()<<"toy_anim: "<<    timer3.ntime();
-        toy->draw(texShader,0,1,2,3,6,11,12,4,5);
-//glFlush(); glFinish();
-//qDebug()<<"toy_draw:"<<    timer3.ntime();
-bind=1;
+        toy->draw(texShader);
     }
-bind=0;
-//    glFlush(); glFinish();
-//    qDebug()<<"\ttloop:\t"<<    timer2.ntime();
-        f=1-f;
 }
 void finalPass(){
 
@@ -250,15 +207,15 @@ void mouseReleaseEvent(SDL_MouseButtonEvent event)
 
 void keyPressEvent(SDL_KeyboardEvent event){
 
-    if(event.keysym.sym==SDLK_KP_2){	if(cameraPhi<3.14/2)  cameraPhi+=0.02;  moveCamera();}
-    if(event.keysym.sym==SDLK_KP_8){	if(cameraPhi>=0.02)   cameraPhi-=0.02;  moveCamera();}
-    if(event.keysym.sym==SDLK_KP_4){	cameraTheta-=0.02;                      moveCamera();}
-    if(event.keysym.sym==SDLK_KP_6){    cameraTheta+=0.02;                      moveCamera();}
+    if(event.keysym.sym==SDLK_KP_2){ if(cameraPhi<3.14/2)  cameraPhi+=0.02;  moveCamera();}
+    if(event.keysym.sym==SDLK_KP_8){ if(cameraPhi>=0.02)   cameraPhi-=0.02;  moveCamera();}
+    if(event.keysym.sym==SDLK_KP_4){ cameraTheta-=0.02;                      moveCamera();}
+    if(event.keysym.sym==SDLK_KP_6){ cameraTheta+=0.02;                      moveCamera();}
 
-    if(event.keysym.sym==SDLK_UP) fichaR-= fichaR>1 ? 1:0;
-    if(event.keysym.sym==SDLK_DOWN)fichaR+= fichaR<8 ? 1:0;
-    if(event.keysym.sym==SDLK_w)    fichaL-= fichaL>1 ? 1:0;
-    if(event.keysym.sym==SDLK_s)    fichaL+= fichaL<8 ? 1:0;
+    if(event.keysym.sym==SDLK_UP)   {fichaR-= fichaR>1 ? 1:0; moveFichas();}
+    if(event.keysym.sym==SDLK_DOWN) {fichaR+= fichaR<8 ? 1:0; moveFichas();}
+    if(event.keysym.sym==SDLK_w)    {fichaL-= fichaL>1 ? 1:0; moveFichas();}
+    if(event.keysym.sym==SDLK_s)    {fichaL+= fichaL<8 ? 1:0; moveFichas();}
 
     if(event.keysym.sym==SDLK_LEFT) chosenToyRight=(chosenToyRight+3)%2;
     if(event.keysym.sym==SDLK_RIGHT)chosenToyRight=(chosenToyRight+1)%2;
@@ -364,7 +321,7 @@ int main( int argc, char* args[] )
        //  qDebug()<<"n: "<<now<<"b: "<<before;
          SDL_Delay( std::max((int)(50 - (now-before)),0) );
          now = SDL_GetTicks();
-         qDebug()<<"fps: "<<1000.0/(now-before);
+         //qDebug()<<"fps: "<<1000.0/(now-before);
          before = now;
 
 	}

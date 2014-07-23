@@ -39,7 +39,7 @@ public:
 
     void Export(std::string filename);
     void Import(std::string filename,bool NORMALIZE=true);
-    void draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture,int unifColorTex, int unifHeightTex,bool draw=true);
+    void draw(Shader* sh,bool draw=true);
     glm::vec4 normalize();
     virtual void traslate   (float x, float y, float z);
     virtual void traslate   (glm::vec3 v);
@@ -158,8 +158,7 @@ Timer timer;
 
     void Export(std::string filename);
     void Import(std::string filename);
-    void draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture,
-              int attrDeform, int unifColorTex, int unifHeightTex, int attrWeights, int attrIndices, bool drawSkeleton=false);
+    void draw(Shader* sh, bool drawSkeleton=false);
 
     virtual void traslate   (float x, float y, float z);
     virtual void traslate   (glm::vec3 v);

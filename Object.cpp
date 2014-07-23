@@ -7,6 +7,7 @@
 #include <QElapsedTimer>
 #include <QDebug>
 #include "Utilities.h"
+#include <glm/gtc/type_ptr.hpp>
 
 Timer timer4;
 
@@ -24,7 +25,7 @@ Object::Object(char *filename,bool NORMALIZE){
     vbo_texture  = new unsigned int          [1];
     numFaces     = new int                   [1];
     model_matrix = new glm::mat4             [1];
-
+    *(model_matrix)=glm::mat4(1.0);
         Import(filename,NORMALIZE);
 }
 
@@ -83,7 +84,7 @@ void Object::Import(std::string filename, bool NORMALIZE){
 
 }
 
-void Object::draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture, int unifColorTex, int unifHeightTex,bool draw)
+void Object::draw(Shader* sh,bool draw)
 {
     sh->disableAttributes();
     sh->enableAttributes("coord3d");
@@ -108,6 +109,10 @@ void Object::draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, i
 
     color->bind(sh->uniforms["monkeyTex"]);
     height->bind(sh->uniforms["heightTex"]);
+
+    glm::mat3 m_tr_inv  = glm::transpose(glm::inverse(glm::mat3(*model_matrix)));
+    glUniformMatrix4fv(sh->uniforms["m"], 1, GL_FALSE, glm::value_ptr(*model_matrix)		);
+    glUniformMatrix3fv(sh->uniforms["m_tr_inv"], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
 
     if(draw)
         glDrawArrays(GL_TRIANGLES, 0, (*numFaces)*3);
@@ -348,16 +353,11 @@ void AnimatedObject::Import(std::string filename){
 
 }
 
-void AnimatedObject::draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture,
-                  int attrDeform,int unifColorTex, int unifHeightTex, int attrWeights, int attrIndices,bool drawSkeleton)
+void AnimatedObject::draw(Shader* sh, bool drawSkeleton)
 {
 
-    Object::draw(sh, attrVertex,  attrNormal,  attrTangent,  attrTexture,
-                 unifColorTex,  unifHeightTex,false);
+    Object::draw(sh,false);
 
-    //"coord3d normal tangent texture weights indices deform m v p m_tr_inv monkeyTex heightTex bones centers parents animation"
-    //toy->draw(texShader,0,1,2,3,6,11,12,4,5);
-  //  sh->enableAttributes(attrDeform);
     sh->enableAttributes("weights");
     sh->enableAttributes("indices");
 
@@ -372,8 +372,19 @@ void AnimatedObject::draw(Shader* sh, int attrVertex, int attrNormal, int attrTa
     glVertexAttribPointer(sh->properties[attrDeform],3, GL_FLOAT, GL_FALSE, 3*sizeof(float),0);
 */
   //  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-//    glFlush(); glFinish();
-//    qDebug()<<"\tbind: "<<    timer4.ntime();
+
+    std::vector<glm::mat3> bones;
+    std::vector<glm::vec3> centers;
+    for(auto B: *skeleton){
+        bones   .push_back(B.m);
+        centers .push_back(B.b);
+    }
+
+    glUniformMatrix3fv  (sh->uniforms["bones"],      8, GL_FALSE, glm::value_ptr(bones[0])	);
+    glUniform3fv        (sh->uniforms["centers"],    8,           glm::value_ptr(centers[0]) );
+    glUniform1i         (sh->uniforms["animation"],  1                          );
+
+
     glDrawArrays(GL_TRIANGLES, 0, (*numFaces)*3);
 /*
     if(drawSkeleton)

@@ -74,6 +74,7 @@ int f=0;
 glm::vec3 cameraPos;
 glm::vec3 cameraUp;
 glm::mat4 view;
+glm::mat4 projection=   glm::perspective(45.0f, 1.0f*1/1, 0.05f, 200.0f);
 
 bool dan= false;
 
@@ -122,21 +123,12 @@ void texPass();
 
 void paintGL()
 {
-
-    glm::mat4 model     =	glm::rotate(glm::mat4(1.0f), Xrot, glm::vec3(1, 0, 0))*
-                            glm::rotate(glm::mat4(1.0f), Yrot, glm::vec3(0, 1, 0))*
-                            glm::rotate(glm::mat4(1.0f), Zrot, glm::vec3(0, 0, 1));
-    glm::mat4 projection=   glm::perspective(45.0f, 1.0f*1/1, 0.05f, 200.0f);
-    glm::mat3 m_tr_inv  =   glm::transpose(glm::inverse(glm::mat3(model)));
-
     glUseProgram(texShader->program);
 //	"coord3d normal tangent texture weights indices m v p m_tr_inv monkeyTex heightTex"
 
-    glUniformMatrix4fv(texShader->properties[7], 1, GL_FALSE, glm::value_ptr(model)		);
     glUniformMatrix4fv(texShader->properties[8], 1, GL_FALSE, glm::value_ptr(view)		);
     glUniformMatrix4fv(texShader->properties[9], 1, GL_FALSE, glm::value_ptr(projection));
-    glUniformMatrix3fv(texShader->properties[10], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
-//    glUniformMatrix3fv(texShader->properties[13], 1, GL_FALSE, glm::value_ptr(bones[0])	);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, texFramebuffer->fbo);
 	GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0+1,GL_COLOR_ATTACHMENT0+2};
 	glDrawBuffers(3, buffers);
@@ -170,10 +162,14 @@ void texPass(){
     glClearColor(0, 0, 0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
 
-    glm::mat3 m_tr_inv;
-    glm::mat4 model;
+
+    glm::mat4 model=glm::mat4(1.0f);
+    glm::mat3 m_tr_inv  =   glm::transpose(glm::inverse(glm::mat3(model)));
 
     texShader->enableAttributes();
+
+    glUniformMatrix4fv(texShader->properties[7], 1, GL_FALSE, glm::value_ptr(model)		);
+    glUniformMatrix3fv(texShader->properties[10], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
 
     glUniform1i(texShader->properties[16], 0 );
 //"coord3d normal tangent texture weights indices deform m v p m_tr_inv monkeyTex heightTex bones centers parents animation"

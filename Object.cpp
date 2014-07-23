@@ -86,27 +86,28 @@ void Object::Import(std::string filename, bool NORMALIZE){
 void Object::draw(Shader* sh, int attrVertex, int attrNormal, int attrTangent, int attrTexture, int unifColorTex, int unifHeightTex,bool draw)
 {
     sh->disableAttributes();
-    sh->enableAttributes(attrVertex);
-    sh->enableAttributes(attrNormal);
-    sh->enableAttributes(attrTangent);
-    sh->enableAttributes(attrTexture);
-
+    sh->enableAttributes("coord3d");
+    sh->enableAttributes("normal");
+    sh->enableAttributes("tangent");
+    sh->enableAttributes("texture");
+//"coord3d normal tangent texture weights indices deform m v p m_tr_inv monkeyTex heightTex bones centers parents animation"
+//board->draw(texShader,0,1,2,3,11,12);
     glBindBuffer(GL_ARRAY_BUFFER, (*vbo_vertices));
-    glVertexAttribPointer(sh->properties[attrVertex], 3, GL_FLOAT, GL_FALSE,3*sizeof(float),0);
+    glVertexAttribPointer(sh->attributes["coord3d"], 3, GL_FLOAT, GL_FALSE,3*sizeof(float),0);
 
     glBindBuffer(GL_ARRAY_BUFFER, (*vbo_normals));
-    glVertexAttribPointer(sh->properties[attrNormal], 3, GL_FLOAT, GL_FALSE,3*sizeof(float),0);
+    glVertexAttribPointer(sh->attributes["normal"], 3, GL_FLOAT, GL_FALSE,3*sizeof(float),0);
 
     glBindBuffer(GL_ARRAY_BUFFER, *vbo_tangents);
-    glVertexAttribPointer(sh->properties[attrTangent],3, GL_FLOAT, GL_FALSE,3*sizeof(float),0);
+    glVertexAttribPointer(sh->attributes["tangent"],3, GL_FLOAT, GL_FALSE,3*sizeof(float),0);
 
     glBindBuffer(GL_ARRAY_BUFFER, *vbo_texture);
-    glVertexAttribPointer(sh->properties[attrTexture],2, GL_FLOAT, GL_FALSE, 2*sizeof(float),0);
+    glVertexAttribPointer(sh->attributes["texture"],2, GL_FLOAT, GL_FALSE, 2*sizeof(float),0);
 
   //  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    color->bind(sh->properties[unifColorTex]);
-    height->bind(sh->properties[unifHeightTex]);
+    color->bind(sh->uniforms["monkeyTex"]);
+    height->bind(sh->uniforms["heightTex"]);
 
     if(draw)
         glDrawArrays(GL_TRIANGLES, 0, (*numFaces)*3);
@@ -354,15 +355,17 @@ void AnimatedObject::draw(Shader* sh, int attrVertex, int attrNormal, int attrTa
     Object::draw(sh, attrVertex,  attrNormal,  attrTangent,  attrTexture,
                  unifColorTex,  unifHeightTex,false);
 
+    //"coord3d normal tangent texture weights indices deform m v p m_tr_inv monkeyTex heightTex bones centers parents animation"
+    //toy->draw(texShader,0,1,2,3,6,11,12,4,5);
   //  sh->enableAttributes(attrDeform);
-    sh->enableAttributes(attrWeights);
-    sh->enableAttributes(attrIndices);
+    sh->enableAttributes("weights");
+    sh->enableAttributes("indices");
 
     glBindBuffer(GL_ARRAY_BUFFER, *vbo_weights);
-    glVertexAttribPointer(sh->properties[attrWeights],4, GL_FLOAT, GL_FALSE, 4*sizeof(float),0);
+    glVertexAttribPointer(sh->attributes["weights"],4, GL_FLOAT, GL_FALSE, 4*sizeof(float),0);
 
     glBindBuffer(GL_ARRAY_BUFFER, *vbo_weightindices);
-    glVertexAttribPointer(sh->properties[attrIndices],4, GL_FLOAT, GL_FALSE, 4*sizeof(float),0);
+    glVertexAttribPointer(sh->attributes["indices"],4, GL_FLOAT, GL_FALSE, 4*sizeof(float),0);
 /*
     glBindBuffer(GL_ARRAY_BUFFER, *vbo_deform);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*(*numFaces)*3, &(deform->at(0)), GL_DYNAMIC_DRAW);

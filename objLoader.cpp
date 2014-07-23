@@ -21,6 +21,7 @@
 //#include <QOpenGLDebugLogger>
 //#include <QOpenGLContext>
 #include "Utilities.h"
+#define time(message,timer) glFlush(); glFinish(); qDebug()<<message<<    timer.ntime();
 
 #define SCREEN_WIDTH	640
 #define SCREEN_HEIGHT	640
@@ -78,6 +79,12 @@ glm::mat4 projection=   glm::perspective(45.0f, 1.0f*1/1, 0.05f, 200.0f);
 
 bool dan= false;
 
+void moveCamera(){
+    cameraPos =   glm::vec3(4*cos(cameraTheta)*sin(cameraPhi), 4*sin(cameraTheta)*sin(cameraPhi),4*cos(cameraPhi));
+    cameraUp  =   glm::vec3(0.0,0.0,1.0);
+    view      =   glm::lookAt(cameraPos, glm::vec3(0.0, 0.0, 0.0), cameraUp);
+}
+
 void initializeGL()
 {
 	glewInit();
@@ -102,7 +109,9 @@ void initializeGL()
     mixShader	->getProperties("corners colorTex normalTex posTex camera",1,4);
 
 	texFramebuffer = new Framebuffer(SCREEN_WIDTH, SCREEN_HEIGHT,3);
+    texFramebuffer->texture_names = {"colorTex","normalTex", "posTex"};
 
+    moveCamera();
 /*
     QSurfaceFormat format;
     // asks for a OpenGL 3.2 debug context using the Core profile
@@ -126,35 +135,28 @@ void paintGL()
     glUseProgram(texShader->program);
 //	"coord3d normal tangent texture weights indices m v p m_tr_inv monkeyTex heightTex"
 
-    glUniformMatrix4fv(texShader->properties[8], 1, GL_FALSE, glm::value_ptr(view)		);
-    glUniformMatrix4fv(texShader->properties[9], 1, GL_FALSE, glm::value_ptr(projection));
+    glUniformMatrix4fv(texShader->uniforms["v"], 1, GL_FALSE, glm::value_ptr(view)		);
+    glUniformMatrix4fv(texShader->uniforms["p"], 1, GL_FALSE, glm::value_ptr(projection));
 
 	glBindFramebuffer(GL_FRAMEBUFFER, texFramebuffer->fbo);
 	GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT0+1,GL_COLOR_ATTACHMENT0+2};
 	glDrawBuffers(3, buffers);
-//glFlush(); glFinish();
-//qDebug()<<"ext:\t"<<    timer.ntime();
+//time("end3:\t", timer)
     texPass();
-//glFlush(); glFinish();
-//qDebug()<<"texpass:\t"<<    timer.ntime();
+//time("end3:\t", timer)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(mixShader->program);
-    glUniform3fv(mixShader->properties[4], 1, glm::value_ptr(cameraPos)	);
+    glUniform3fv(mixShader->uniforms["camera"], 1, glm::value_ptr(cameraPos)	);
+//time("end3:\t", timer)
     if(dQ == -1)    texFramebuffer->draw(mixShader);
     else            texFramebuffer->draw(mixShader,dQ);
-	Xrot+=wXrot;
-	Yrot+=wYrot;
-	Zrot+=wZrot;
-    cameraPos =   glm::vec3(4*cos(cameraTheta)*sin(cameraPhi), 4*sin(cameraTheta)*sin(cameraPhi),4*cos(cameraPhi));
-    cameraUp  =   glm::vec3(0.0,0.0,1.0);
-    view      =   glm::lookAt(cameraPos, glm::vec3(0.0, 0.0, 0.0), cameraUp);
-
+//time("end3:\t", timer)
     for(int i=0;i<toyList.size();i++)
         if(toyList[i]->position->x >8 ||
            toyList[i]->position->x <1)
            toyList.erase(toyList.begin()+i);
-//glFlush(); glFinish();
-//qDebug()<<"end3:\t"<<    timer.ntime();
+
+//time("end3:\t", timer)
 }
 
 void texPass(){
@@ -168,10 +170,10 @@ void texPass(){
 
     texShader->enableAttributes();
 
-    glUniformMatrix4fv(texShader->properties[7], 1, GL_FALSE, glm::value_ptr(model)		);
-    glUniformMatrix3fv(texShader->properties[10], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
+    glUniformMatrix4fv(texShader->uniforms["m"],        1, GL_FALSE, glm::value_ptr(model)		);
+    glUniformMatrix3fv(texShader->uniforms["m_tr_inv"], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
 
-    glUniform1i(texShader->properties[16], 0 );
+    glUniform1i(texShader->uniforms["animation"], 0 );
 //"coord3d normal tangent texture weights indices deform m v p m_tr_inv monkeyTex heightTex bones centers parents animation"
     board->draw(texShader,0,1,2,3,11,12);
   //  origin->draw(texShader,0,1,2,3,11,12);
@@ -179,15 +181,15 @@ void texPass(){
 
     model     =	glm::translate(glm::mat4(1.f),glm::vec3(0,(float)fichaL*0.31-1.4,0));
     m_tr_inv  = glm::transpose(glm::inverse(glm::mat3(model)));
-    glUniformMatrix4fv(texShader->properties[7], 1, GL_FALSE, glm::value_ptr(model)		);
-    glUniformMatrix3fv(texShader->properties[10], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
+    glUniformMatrix4fv(texShader->uniforms["m"], 1, GL_FALSE, glm::value_ptr(model)		);
+    glUniformMatrix3fv(texShader->uniforms["m_tr_inv"], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
 
     ficha1->draw(texShader,0,1,2,3,11,12);
 
     model     =	glm::translate(glm::mat4(1.f),glm::vec3(0,(float)fichaR*0.31-1.4,0));
     m_tr_inv  = glm::transpose(glm::inverse(glm::mat3(model)));
-    glUniformMatrix4fv(texShader->properties[7], 1, GL_FALSE, glm::value_ptr(model)		);
-    glUniformMatrix3fv(texShader->properties[10], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
+    glUniformMatrix4fv(texShader->uniforms["m"], 1, GL_FALSE, glm::value_ptr(model)		);
+    glUniformMatrix3fv(texShader->uniforms["m_tr_inv"], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
 
     ficha2->draw(texShader,0,1,2,3,11,12);
 
@@ -198,8 +200,8 @@ void texPass(){
 
         model=*(toy->model_matrix);
         m_tr_inv  = glm::transpose(glm::inverse( glm::mat3(model) ));
-        glUniformMatrix4fv(texShader->properties[7], 1, GL_FALSE, glm::value_ptr(model)		);
-        glUniformMatrix3fv(texShader->properties[10], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
+        glUniformMatrix4fv(texShader->uniforms["m"], 1, GL_FALSE, glm::value_ptr(model)		);
+        glUniformMatrix3fv(texShader->uniforms["m_tr_inv"], 1, GL_FALSE, glm::value_ptr(m_tr_inv)	);
 
 //        qDebug()<<"toy_matrix:"<<    timer.ntime();
 
@@ -212,9 +214,9 @@ void texPass(){
             centers[i]=toy->skeleton->at(i).b;
         }
 
-        glUniformMatrix3fv  (texShader->properties[13], 8, GL_FALSE, glm::value_ptr(bones[0])	);
-        glUniform3fv        (texShader->properties[14], 8,           glm::value_ptr(centers[0]) );
-        glUniform1i         (texShader->properties[16],              1                          );
+        glUniformMatrix3fv  (texShader->uniforms["bones"],      8, GL_FALSE, glm::value_ptr(bones[0])	);
+        glUniform3fv        (texShader->uniforms["centers"],    8,           glm::value_ptr(centers[0]) );
+        glUniform1i         (texShader->uniforms["animation"],  1                          );
 
 //glFlush(); glFinish();
 //qDebug()<<"toy_anim: "<<    timer3.ntime();
@@ -248,10 +250,10 @@ void mouseReleaseEvent(SDL_MouseButtonEvent event)
 
 void keyPressEvent(SDL_KeyboardEvent event){
 
-    if(event.keysym.sym==SDLK_KP_2)	if(cameraPhi<3.14/2)  cameraPhi+=0.02;
-    if(event.keysym.sym==SDLK_KP_8)	if(cameraPhi>=0.02) cameraPhi-=0.02;
-    if(event.keysym.sym==SDLK_KP_4)	cameraTheta-=0.02;
-    if(event.keysym.sym==SDLK_KP_6) cameraTheta+=0.02;
+    if(event.keysym.sym==SDLK_KP_2){	if(cameraPhi<3.14/2)  cameraPhi+=0.02;  moveCamera();}
+    if(event.keysym.sym==SDLK_KP_8){	if(cameraPhi>=0.02)   cameraPhi-=0.02;  moveCamera();}
+    if(event.keysym.sym==SDLK_KP_4){	cameraTheta-=0.02;                      moveCamera();}
+    if(event.keysym.sym==SDLK_KP_6){    cameraTheta+=0.02;                      moveCamera();}
 
     if(event.keysym.sym==SDLK_UP) fichaR-= fichaR>1 ? 1:0;
     if(event.keysym.sym==SDLK_DOWN)fichaR+= fichaR<8 ? 1:0;
@@ -360,9 +362,9 @@ int main( int argc, char* args[] )
 		SDL_GL_SwapWindow( gWindow );
          now = SDL_GetTicks();
        //  qDebug()<<"n: "<<now<<"b: "<<before;
-         SDL_Delay( std::max((int)(33 - (now-before)),0) );
+         SDL_Delay( std::max((int)(50 - (now-before)),0) );
          now = SDL_GetTicks();
-//         qDebug()<<"fps: "<<1000.0/(now-before);
+         qDebug()<<"fps: "<<1000.0/(now-before);
          before = now;
 
 	}

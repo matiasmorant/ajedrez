@@ -65,7 +65,7 @@ Framebuffer::Framebuffer(int width, int height){		init(width,height, 1);}
 Framebuffer::Framebuffer(int width, int height,int n){	init(width,height, n);}
 
 void Framebuffer::draw(Shader* sh, int i){
-  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+ /* glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
  // "v_coord fbo_texture"
   glUseProgram(sh->program);
   glActiveTexture(GL_TEXTURE0+0);
@@ -83,7 +83,7 @@ void Framebuffer::draw(Shader* sh, int i){
     0                   // offset of first element
   );
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  glDisableVertexAttribArray(sh->properties[0]);
+  glDisableVertexAttribArray(sh->properties[0]);*/
 }
 
 void Framebuffer::draw(Shader* sh){ 
@@ -97,13 +97,13 @@ for(int i=0;i<N;i++){
 
   glActiveTexture(GL_TEXTURE0+i);
   glBindTexture(GL_TEXTURE_2D, fbo_texture[i]);
-  glUniform1i(sh->properties[i+1], i);
+  glUniform1i(sh->uniforms[texture_names[i]], i);
 }
 
-  glEnableVertexAttribArray(sh->properties[0]);
+  glEnableVertexAttribArray(sh->attributes["corners"]);
   glBindBuffer(GL_ARRAY_BUFFER, vbo_fbo_vertices);
   glVertexAttribPointer(
-    sh->properties[0],  // attribute
+    sh->attributes["corners"],  // attribute
     2,                  // number of elements per vertex, here (x,y)
     GL_FLOAT,           // the type of each element
     GL_FALSE,           // take our values as-is
@@ -111,7 +111,7 @@ for(int i=0;i<N;i++){
     0                   // offset of first element
   );
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  glDisableVertexAttribArray(sh->properties[0]);
+  glDisableVertexAttribArray(sh->attributes["corners"]);
 
 
 }

@@ -109,38 +109,37 @@ char* readWord(char* list, int n){
 }
 
 
-void Shader::getProperties(char* list, int attributes, int uniforms){
-    attributeNumber=attributes;
-	properties=new GLint[attributes+uniforms];
+void Shader::getProperties(char* list, int attributeNum, int uniformNum){
+    attributeNumber=attributeNum;
+
 	int i;
-	for(i=0;i<attributes;i++){
-		const char* 	attribute_name = readWord(list,i+1);
-        properties[i] = glGetAttribLocation(program, attribute_name);
-        if (properties[i] == -1) {
-          fprintf(stderr, "Could not find attribute %s\n", attribute_name);
-        }//else fprintf(stderr, " %s location: %d \n", attribute_name, properties[i]);
+    for(i=0;i<attributeNum;i++){
+        std::string attribute_name(readWord(list,i+1));
+        attributes[attribute_name] = glGetAttribLocation(program, attribute_name.data());
+        if (attributes[attribute_name] == -1) {
+          fprintf(stderr, "Could not find attribute %s\n", attribute_name.data());
+        }
 	}
-	for(i=0;i<uniforms;i++){
-		const char* 	uniform_name = readWord(list,attributes+i+1);
-        properties[attributes+i] = glGetUniformLocation(program, uniform_name);
-        if (properties[attributes+i] == -1) {
-          fprintf(stderr, "Could not find uniform %s\n", uniform_name);
-        }//else fprintf(stderr, " %s location: %d \n", uniform_name, properties[attributes+i]);
+    for(i=0;i<uniformNum;i++){
+        std::string uniform_name(readWord(list,attributeNum+i+1));
+        uniforms[uniform_name] = glGetUniformLocation(program, uniform_name.data());
+        if (uniforms[uniform_name] == -1) {
+          fprintf(stderr, "Could not find uniform %s\n", uniform_name.data());
+        }
 	}
 }
 void	Shader::enableAttributes(){
-    for(int i=0;i<attributeNumber;i++)
-        glEnableVertexAttribArray(properties[i]);
+    for(auto &kv: attributes) glEnableVertexAttribArray(kv.second);
 }
 
-void	Shader::enableAttributes(int i){
-    if(i<attributeNumber) glEnableVertexAttribArray(properties[i]);
+void	Shader::enableAttributes(std::string attributeName){
+    glEnableVertexAttribArray(attributes[attributeName]);
 }
 
 void	Shader::disableAttributes(){
-    for(int i=0;i<attributeNumber;i++)  glDisableVertexAttribArray(properties[i]);
+    for(auto &kv: attributes)  glDisableVertexAttribArray(kv.second);
 }
 
-void	Shader::disableAttributes(int i){
-    if(i<attributeNumber) glDisableVertexAttribArray(properties[i]);
+void	Shader::disableAttributes(std::string attributeName){
+    glDisableVertexAttribArray(attributes[attributeName]);
 }

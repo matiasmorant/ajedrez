@@ -4,6 +4,8 @@
 #define SHADER_H
 
 #include <GL/glu.h>
+#include <unordered_map>
+#include <map>
 class Shader{
 
 public:
@@ -14,12 +16,13 @@ public:
 	GLuint vertex;
 	GLuint fragment;
     int attributeNumber;
-	GLint*	properties;
-	void	getProperties(char* list, int attributes, int uniforms);
+    std::unordered_map<std::string,GLint> attributes;
+    std::unordered_map<std::string,GLint> uniforms;
+    void	getProperties(char* list, int attributeNum, int uniformNum);
     void	enableAttributes();
-    void	enableAttributes(int i);
+    void	enableAttributes(std::string attributeName);
     void	disableAttributes();
-    void	disableAttributes(int i);
+    void	disableAttributes(std::string attributeName);
 	char* shaderToString(const char* filename);
 	void print_log(GLuint object);
 	GLuint createShader(const char* filename, GLenum type);

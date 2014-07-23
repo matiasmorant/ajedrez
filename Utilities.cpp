@@ -35,6 +35,7 @@ std::string check_for_errno(){
         std::string error(strerror(errno));
         return error;
 }
+//#define time(message,timer) glFlush(); glFinish(); qDebug()<<"message\t"<<    timer.ntime();
 
 float angle_between(glm::vec3 u, glm::vec3 v){
     float U=glm::dot(u,u);

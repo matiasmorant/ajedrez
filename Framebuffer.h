@@ -4,6 +4,7 @@
 #define FRAMEBUFFER_H
 
 #include <GL/glu.h>
+#include <vector>
 #include "Shader.h"
 
 class Framebuffer{
@@ -16,6 +17,7 @@ public:
 GLuint fbo, rbo_depth;
 GLuint *fbo_texture;
 GLuint vbo_fbo_vertices;
+std::vector<std::string> texture_names;
 int N;
 
 void draw(Shader* sh, int i);

@@ -6,6 +6,8 @@
 #include "Shader.h"
 #include "Utilities.h"
 
+Timer timer1;
+
 void Framebuffer::init(int width, int height, int n){
 
 /* Create back-buffer, used for post-processing */
@@ -66,7 +68,7 @@ void Framebuffer::draw(Shader* sh, int i){
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
  // "v_coord fbo_texture"
   glUseProgram(sh->program);
-  glActiveTexture(GL_TEXTURE0+fbo_texture[i]);
+  glActiveTexture(GL_TEXTURE0+0);
   glBindTexture(GL_TEXTURE_2D, fbo_texture[i]);
   glUniform1i(sh->properties[1], fbo_texture[i]);
   glEnableVertexAttribArray(sh->properties[0]);
@@ -87,6 +89,7 @@ void Framebuffer::draw(Shader* sh, int i){
 void Framebuffer::draw(Shader* sh){ 
 
  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
  // "v_coord fbo_texture"
  // glUseProgram(sh->program);
 int i;

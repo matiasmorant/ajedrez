@@ -1,6 +1,7 @@
 #include "Utilities.h"
 #include <GL/glew.h>
 #include <GL/glu.h>
+
 std::string check_for_glError(){
     std::string errorString;
     GLenum errorState = glGetError();
@@ -30,3 +31,14 @@ void check_for_glError(std::string pointMessage){
     std::cout<<"\n";
 }
 
+std::string check_for_errno(){
+        std::string error(strerror(errno));
+        return error;
+}
+
+float angle_between(glm::vec3 u, glm::vec3 v){
+    float U=glm::dot(u,u);
+    float V=glm::dot(v,v);
+    return (U==0) || (V==0) ? 0 : glm::acos(glm::dot(u,v)/glm::sqrt(U*V));
+
+}

@@ -2,11 +2,13 @@
 #include "Shader.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include <GL/glu.h>
 
 char* Shader::shaderToString(const char* filename){
 
 	FILE* input = fopen(filename,"r");
+
 	fseek(input,0,SEEK_END);
 	long size = ftell(input);
 	fseek(input,0,SEEK_SET);
@@ -127,7 +129,8 @@ void Shader::getProperties(char* list, int attributes, int uniforms){
 	}
 }
 void	Shader::enableAttributes(){
-    for(int i=0;i<attributeNumber;i++) glEnableVertexAttribArray(properties[i]);
+    for(int i=0;i<attributeNumber;i++)
+        glEnableVertexAttribArray(properties[i]);
 }
 
 void	Shader::enableAttributes(int i){
